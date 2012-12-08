@@ -53,28 +53,28 @@ vec4 celShade(vec3 normal, vec3 direction, vec3 halfAngle, vec4 lightcolor) {
     float df = max(dot(normal, direction), 0.0);
     float epsilon = fwidth(df);
     if (df > interval1 - epsilon && df < interval1 + epsilon) {
-      df = mix(interval1, interval2, smoothstep(interval1 - epsilon, interval1 + epsilon, df));
+        df = mix(interval1, interval2, smoothstep(interval1 - epsilon, interval1 + epsilon, df));
     } else if (df > interval2 - epsilon && df < interval2 + epsilon) {
-      df = mix(interval2, interval3, smoothstep(interval2 - epsilon, interval2 + epsilon, df));
+        df = mix(interval2, interval3, smoothstep(interval2 - epsilon, interval2 + epsilon, df));
     } else if (df > interval3 - epsilon && df < interval3 + epsilon) {
-      df = mix(interval3, interval4, smoothstep(interval3 - epsilon, interval3 + epsilon, df));
+        df = mix(interval3, interval4, smoothstep(interval3 - epsilon, interval3 + epsilon, df));
     } else if (df < interval1) {
-      df = 0.0;
+        df = 0.0;
     } else if (df < interval2) {
-      df = interval2;
+        df = interval2;
     } else if (df < interval3) {
-      df = interval3;
+        df = interval3;
     } else {
-      df = interval4;
+        df = interval4;
     }
     vec4 diffuseTerm = diffuse * lightcolor * df;
 
     float sf = pow(max(dot(normal, halfAngle), 0.0), shininess);
     epsilon = fwidth(sf);
     if(sf > 0.5 - epsilon && sf < 0.5 + epsilon) {
-      sf = smoothstep(0.5 - epsilon, 05 + epsilon, sf);
+        sf = smoothstep(0.5 - epsilon, 05 + epsilon, sf);
     } else {
-      sf = step(0.5, sf);
+        sf = step(0.5, sf);
     }
     vec4 specularTerm = specular * lightcolor * sf;
     return diffuseTerm + specularTerm;
@@ -82,42 +82,48 @@ vec4 celShade(vec3 normal, vec3 direction, vec3 halfAngle, vec4 lightcolor) {
 
 void main (void)
 {
-    if (istex && enableTextures) {
-      gl_FragColor = texture2D(tex, gl_TexCoord[0].st);
-    } else if (enablelighting) {
-        
+    if (enablelighting) {
+
         vec4 finalcolor = vec4(0, 0, 0, 0);
 
         // YOUR CODE FOR HW 2 HERE
         // A key part is implementation of the fragment shader
-	vec4 _mypos = gl_ModelViewMatrix * myvertex;
+        vec4 _mypos = gl_ModelViewMatrix * myvertex;
         vec3 mypos = _mypos.xyz / _mypos.w;
-	// not sure about this
-	vec3 eyepos = vec3(0, 0, 0);
+        // not sure about this
+        vec3 eyepos = vec3(0, 0, 0);
         vec3 eyedir = normalize(eyepos - mypos);
-        vec3 normal = normalize(gl_NormalMatrix * mynormal);	
-	vec3 direction, halfAngle;
+        vec3 normal = normalize(gl_NormalMatrix * mynormal);
+        vec3 direction, halfAngle;
 
-	for (int i = 0; i < numused; i++) {
-	  vec4 lightcolor = lightcolor[i];
-	  if (lightposn[i].w == 0) {
-	  direction = normalize(lightposn[i].xyz);
-	  halfAngle = normalize(direction + eyedir);
-	  } else {
-	    vec3 position = lightposn[i].xyz / lightposn[i].w;
-	    direction = normalize(position - mypos);
-	    halfAngle = normalize(direction + eyedir);
-	  }
-	if (isCelShaded) {
-	  finalcolor += celShade(normal, direction, halfAngle, lightcolor);
-	} else {
-	  finalcolor += phongIllumination(normal, direction, halfAngle, lightcolor);
-	}
-    }
-      finalcolor += (color * ambient) + emission;
-      gl_FragColor = finalcolor;
+        for (int i = 0; i < numused; i++) {
+            vec4 lightcolor = lightcolor[i];
+            if (lightposn[i].w == 0) {
+                direction = normalize(lightposn[i].xyz);
+                halfAngle = normalize(direction + eyedir);
+            } else {
+                vec3 position = lightposn[i].xyz / lightposn[i].w;
+                direction = normalize(position - mypos);
+                halfAngle = normalize(direction + eyedir);
+            }
+            if (isCelShaded) {
+                finalcolor += celShade(normal, direction, halfAngle, lightcolor);
+            } else {
+                finalcolor += phongIllumination(normal, direction, halfAngle, lightcolor);
+            }
+        }
+        finalcolor += (color * ambient) + emission;
+        if (istex && enableTextures) {
+          gl_FragColor = texture2D(tex, gl_TexCoord[0].st) * finalcolor;
+        } else {
+          gl_FragColor = finalcolor;
+        }
     } else {
-      gl_FragColor = color ;
+        if (istex && enableTextures) {
+          gl_FragColor = texture2D(tex, gl_TexCoord[0].st) * color;
+        } else {
+          gl_FragColor = color ;
+        }
     }
 }
 
@@ -146,4 +152,4 @@ vec4 crepuscular() {
 }
 */
 
-   
+
