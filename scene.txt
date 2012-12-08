@@ -1,0 +1,582 @@
+# Scene description.
+# Lights are position (4), color (4) 
+# Materials come next 
+# Teapot geometry specified at end
+
+#light 0 5 10 1 0.6 0.3 0.0 1.0 
+#light 0 5 -10 1 0 0.3 0.6 1 
+
+#comment
+
+size 600 400
+camera 0 0 2 0 0 0 0 1 0 90.0
+
+#light 6.5 0 0 0 1 0.5 0 1.0 
+#light 0 0 50 1 0.2 0.2 .2 1 
+
+#light -50 -17 -50 1 0.5 0.5 .5 1 
+#light 50 -17 -50 1 0.5 .5 .5 1
+
+light 0 0 -1 0 .3 .3 .3 1 
+
+ambient 0.2 0.2 0.2 1 
+specular .06 .12 .12 1
+shininess 30
+
+translate 0 0 -45
+
+diffuse .24 .44 .44 1
+pushTransform
+room 100 100 35
+popTransform
+
+pushTransform
+  translate 0 17.5 0
+  barrel_vault 26.5 23.5 100
+popTransform
+
+pushTransform
+translate 25 0 0
+  specular 0 0 0 1
+  shininess 1
+  #pillar
+  pushTransform
+  translate 0 -2.5 50
+  scale 3 30 3
+  pillar 0
+  popTransform
+  pushTransform
+  translate 0 -2.5 40
+  scale 3 30 3
+  pillar 0
+  popTransform
+  pushTransform
+  translate 0 -2.5 30
+  scale 3 30 3
+  pillar 0
+  popTransform
+  pushTransform
+  translate 0 -2.5 20
+  scale 3 30 3
+  pillar 0
+  popTransform
+  pushTransform
+  translate 0 -2.5 10
+  scale 3 30 3
+  pillar 0
+  popTransform 
+  pushTransform
+  translate 0 -2.5 0
+  scale 3 30 3  
+  pillar 0
+  popTransform
+  pushTransform
+  translate 0 -2.5 -10
+  scale 3 30 3
+  pillar 0
+  popTransform
+  pushTransform
+  translate 0 -2.5 -20
+  scale 3 30 3
+  pillar 0
+  popTransform
+  
+  #arch
+  pushTransform
+  translate 0 12.5 45
+  rotate 0 1 0 90
+  arch 0
+  popTransform
+  pushTransform
+  translate 0 12.5 35
+  rotate 0 1 0 90
+  arch 0
+  popTransform  
+  pushTransform
+  translate 0 12.5 25
+  rotate 0 1 0 90
+  arch 0
+  popTransform
+  pushTransform
+  translate 0 12.5 15
+  rotate 0 1 0 90
+  arch 0
+  popTransform
+  pushTransform
+  translate 0 12.5 5
+  rotate 0 1 0 90
+  arch 0
+  popTransform
+  pushTransform
+  translate 0 12.5 -5
+  rotate 0 1 0 90
+  arch 0
+  popTransform
+  pushTransform
+  translate 0 12.5 -15
+  rotate 0 1 0 90
+  arch 0
+  popTransform
+  pushTransform
+  translate 0 15 -20.75
+  scale 3 5 1.5
+  cube 1
+  popTransform
+  
+  #bench
+  specular 1 1 1 1
+  shininess 100
+  diffuse .55 .27 .075 1
+  pushTransform
+  translate -11.5 -17.5 45
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+  pushTransform
+  translate -11.5 -17.5 35
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+  pushTransform
+  translate -11.5 -17.5 25
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+  pushTransform
+  translate -11.5 -17.5 15
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+  pushTransform
+  translate -11.5 -17.5 5
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+  pushTransform
+  translate -11.5 -17.5 -5
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+  pushTransform
+  translate -11.5 -17.5 -15
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+popTransform
+
+diffuse .24 .44 .44 1
+pushTransform
+translate -25 0 0
+  #pillar
+  specular 0 0 0 1
+  shininess 1
+  pushTransform
+  translate 0 -2.5 50
+  scale 3 30 3
+  pillar 0
+  popTransform
+  pushTransform
+  translate 0 -2.5 40
+  scale 3 30 3
+  pillar 0
+  popTransform
+  pushTransform
+  translate 0 -2.5 30
+  scale 3 30 3
+  pillar 0
+  popTransform
+  pushTransform
+  translate 0 -2.5 20
+  scale 3 30 3
+  pillar 0
+  popTransform
+  pushTransform
+  translate 0 -2.5 10
+  scale 3 30 3
+  pillar 0
+  popTransform 
+  pushTransform
+  translate 0 -2.5 0
+  scale 3 30 3  
+  pillar 0
+  popTransform
+  pushTransform
+  translate 0 -2.5 -10
+  scale 3 30 3
+  pillar 0
+  popTransform
+  pushTransform
+  translate 0 -2.5 -20
+  scale 3 30 3
+  pillar 0
+  popTransform
+  
+  #arch
+  pushTransform
+  translate 0 12.5 45
+  rotate 0 1 0 90
+  arch 0
+  popTransform
+  pushTransform
+  translate 0 12.5 35
+  rotate 0 1 0 90
+  arch 0
+  popTransform  
+  pushTransform
+  translate 0 12.5 25
+  rotate 0 1 0 90
+  arch 0
+  popTransform
+  pushTransform
+  translate 0 12.5 15
+  rotate 0 1 0 90
+  arch 0
+  popTransform
+  pushTransform
+  translate 0 12.5 5
+  rotate 0 1 0 90
+  arch 0
+  popTransform
+  pushTransform
+  translate 0 12.5 -5
+  rotate 0 1 0 90
+  arch 0
+  popTransform
+  pushTransform
+  translate 0 12.5 -15
+  rotate 0 1 0 90
+  arch 0
+  popTransform
+  pushTransform
+  translate 0 15 -20.75
+  scale 3 5 1.5
+  cube 1
+  popTransform
+  
+  #bench
+  specular 1 1 1 1
+  shininess 100
+  diffuse .55 .27 .075 1
+  pushTransform
+  translate 11.5 -17.5 45
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+  pushTransform
+  translate 11.5 -17.5 35
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+  pushTransform
+  translate 11.5 -17.5 25
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+  pushTransform
+  translate 11.5 -17.5 15
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+  pushTransform
+  translate 11.5 -17.5 5
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+  pushTransform
+  translate 11.5 -17.5 -5
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+  pushTransform
+  translate 11.5 -17.5 -15
+  rotate 0 1 0 180
+  bench 0
+  popTransform
+popTransform
+
+diffuse .53 .81 .92 1
+pushTransform
+translate 0 -15 -50
+scale 1.5 1 1
+cylinder 34 34 1
+popTransform
+pushTransform
+translate 0 -16 -50
+scale 1.5 1 1
+cylinder 42 42 1
+popTransform
+pushTransform
+translate 0 -17 -50
+scale 1.5 1 1
+cylinder 50 50 1
+popTransform
+
+#door frame
+diffuse .12 .22 .22 1
+specular .06 .12 .12 1
+shininess 30
+pushTransform
+translate 0 2.5 50
+scale 1.5 1.5 1
+arch 0
+popTransform
+pushTransform
+translate 6.7 -7.5 50
+scale 3 20 3
+  pillar 0
+popTransform
+pushTransform
+translate -6.7 -7.5 50
+scale 3 20 3
+  pillar 0
+popTransform
+
+#door
+specular 0 0 0 1
+shininess 40
+pushTransform
+diffuse 0.25 .16 .01 1
+translate 0 -4 49
+door 12 27
+popTransform
+
+#aisle
+specular 1 1 1 1
+shininess 40
+pushTransform
+diffuse 1 0 0 1
+translate 0 -18 0
+scale 10 1 100
+textured_cube 1
+diffuse .48 .5 .56 1
+popTransform
+
+#sword
+shininess 100
+light 0 5 -85 1 .25 .4 .5 1 
+light 0 0 -85 1 1 .53 0 1 
+light 0 -5 -85 1 .25 .4 .5 1 
+
+pushTransform
+diffuse 1 .843 0 1
+translate 0 5 -40
+rotate 1 0 0 90
+scale .3 .3 .3
+sword 0
+popTransform
+
+#crystal. Gotta hardcode in translation to sword to do circular effect.
+shininess 60
+diffuse .53 .808 .98 1
+pushTransform
+translate -7 0 0
+scale .5 1.5 .5
+crystal 0
+popTransform
+pushTransform
+translate 7 0 0
+scale .5 1.5 .5
+crystal 0
+popTransform
+pushTransform
+translate 0 0 -7
+scale .5 1.5 .5
+crystal 0
+popTransform
+pushTransform
+translate 0 0 7
+scale .5 1.5 .5
+crystal 0
+popTransform
+shininess 100
+
+#window
+pushTransform
+  translate -49.5 0 0
+  pushTransform
+    translate 0 0 45
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass -1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 35
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass -1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 25
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass -1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 15
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass -1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 5
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass -1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 -5
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass -1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 -15
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass -1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 -25
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass -1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 -35
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass -1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 -45
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass -1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+popTransform
+
+pushTransform
+  translate 49.5 0 0
+  pushTransform
+    translate 0 0 45
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass 1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 35
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass 1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 25
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass 1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 15
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass 1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 5
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass 1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 -5
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass 1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 -15
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass 1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 -25
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass 1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 -35
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass 1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+  pushTransform
+    translate 0 0 -45
+    rotate 0 1 0 90
+    scale 2 2 2
+    diffuse 1.0 1.0 1.0 1
+    glass 1
+    diffuse .12 .22 .22 1
+    window 0
+  popTransform
+popTransform
+
+
