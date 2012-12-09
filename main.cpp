@@ -47,6 +47,20 @@ void reshape(int width, int height) {
     }
     glLoadMatrixf(&mv[0][0]) ;
 
+    // Create a texture for the occlusion map
+    glGenTextures(1, &occlusionMap);
+    glBindTexture(GL_TEXTURE_2D, occlusionMap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w/2, h/2, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    // Create a framebuffer for the occlusion map
+    glGenFramebuffersEXT(1, &occlusionFramebuffer);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, occlusionFramebuffer);
+    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, occlusionMap, 0);
+
     glViewport(0, 0, w, h);
 }
 
