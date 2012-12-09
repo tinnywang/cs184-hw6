@@ -45,6 +45,12 @@ EXTERN float sx, sy ; // the scale in x and y
 EXTERN GLuint textures[10];
 EXTERN GLuint carpet;
 EXTERN GLuint wood;
+EXTERN GLuint wall_normal_map;
+EXTERN GLuint wall_texture;
+EXTERN GLuint texsampler;
+EXTERN GLuint bumpsampler;
+EXTERN GLuint tangent_loc;
+EXTERN GLuint bitangent_loc;
 
 // Lighting parameter array, similar to that in the fragment shader
 const int numLights = 10 ; 
@@ -101,6 +107,7 @@ EXTERN GLuint tex;
 EXTERN int occlusionMapLoc ;
 EXTERN GLuint occlusionMap ;
 EXTERN GLuint occlusionFramebuffer ;
+EXTERN GLuint isbump;
 
 // Variables to toggle different lighting/shading/texture/animation features
 EXTERN GLuint isCelShaded;	// phong is the default

@@ -166,8 +166,6 @@ void draw_obj_with_texture(vector<glm::vec3> &vertices,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    GLint texsampler;
-    texsampler = glGetUniformLocation(shaderprogram, "tex");
     glUniform1i(texsampler, 0);
 
     glEnable(GL_TEXTURE_2D);
@@ -189,6 +187,84 @@ void draw_obj_with_texture(vector<glm::vec3> &vertices,
     glDisable(GL_TEXTURE_2D);
 
     glUniform1i(istex, false);
+}
+
+void draw_obj_with_texture_and_normal(vector<glm::vec3> &vertices, vector<glm::vec3> &normals, vector<glm::vec2> &textures,
+                                      vector<glm::vec3> tangents, vector<glm::vec3> bitangents, GLuint texture, GLuint normal_map) {
+    glUniform1i(istex, true);
+    glUniform1i(isbump, true);
+    
+    glActiveTexture(GL_TEXTURE0);    
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glEnable(GL_TEXTURE_2D);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glTexCoordPointer(2, GL_FLOAT, 0, &textures[0]);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glUniform1i(texsampler, 0);
+    
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, normal_map);
+    glEnable(GL_TEXTURE_2D);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glUniform1i(bumpsampler, 1);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);
+
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glNormalPointer(GL_FLOAT, 0, &normals[0]);
+    
+    glEnableVertexAttribArray(tangent_loc);
+    glVertexAttribPointer(tangent_loc, 3, GL_FLOAT, GL_FALSE, 0, &tangents[0]);
+
+    glEnableVertexAttribArray(bitangent_loc);
+    glVertexAttribPointer(bitangent_loc, 3, GL_FLOAT, GL_FALSE, 0, &bitangents[0]);
+
+    glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+
+    glDisableVertexAttribArray(tangent_loc);
+    glDisableVertexAttribArray(bitangent_loc);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    glActiveTexture(GL_TEXTURE1);    
+    glDisable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE0);
+    glDisable(GL_TEXTURE_2D);
+    
+
+    glUniform1i(istex, false);
+    glUniform1i(isbump, false);
+    
+}
+
+void computeTangents(const vector<glm::vec3> & vertices, const vector<glm::vec3> & normals,
+                     const vector<glm::vec2> & textures, vector<glm::vec3> * tangents,
+                     vector<glm::vec3> * bitangents) {
+    for (int tri = 0; tri < vertices.size(); tri=tri+3) {
+        glm::vec3 changeVert1 = vertices[tri+1] - vertices[tri];
+        glm::vec3 changeVert2 = vertices[tri+2] - vertices[tri];
+        glm::vec2 changeTex1 = textures[tri+1] - textures[tri];
+        glm::vec2 changeTex2 = textures[tri+2] - textures[tri];
+       
+        float scale = static_cast<float>(1) / (changeTex1.x * changeTex2.y - changeTex1.y * changeTex2.x);
+        glm::vec3 tangent = scale * (changeVert1 * changeTex2.y - changeVert2 * changeTex1.y);
+        glm::vec3 bitangent = scale * (changeVert2 * changeTex1.x - changeVert1 * changeTex2.x);
+        tangent = glm::normalize(tangent - normals[tri] * glm::dot(normals[tri], tangent));
+        tangents->push_back(tangent);
+        tangents->push_back(tangent);
+        tangents->push_back(tangent);
+        bitangents->push_back(bitangent);
+        bitangents->push_back(bitangent);
+        bitangents->push_back(bitangent);
+    }
 }
 
 vector<glm::vec3> crystal_vertices, crystal_normals;
@@ -580,8 +656,9 @@ void draw_cube(double width, double length, double height, double y_start, bool 
         textures.push_back(glm::vec2(8, 8));
 
         draw_obj_with_texture(vertices, normals, textures, texture_file);
+    } else {
+      draw_obj(vertices, normals);
     }
-    draw_obj(vertices, normals);
 }
 
 vector<glm::vec3> barrel_vertices, barrel_normals;
@@ -743,8 +820,9 @@ void draw_cylinder(double top_radius, double bottom_radius, double height, doubl
     draw_obj(vertices, normals);
 }
 
-vector <glm::vec3> room_vertices, room_normals;
-void draw_room(double width, double length, double height) {
+vector <glm::vec3> room_vertices, room_normals, room_tangents, room_bitangents;
+vector <glm::vec2> room_textures;
+void draw_room(double width, double length, double height, GLuint texture_file, GLuint normal_map) {
     if (room_vertices.size() == 0) {
         glm::vec3 v1 = glm::vec3(width/2, -height/2, length/2);
         glm::vec3 v2 = glm::vec3(width/2, -height/2, -length/2);
@@ -754,89 +832,163 @@ void draw_room(double width, double length, double height) {
         glm::vec3 v6 = glm::vec3(width/2, height/2, -length/2);
         glm::vec3 v7 = glm::vec3(-width/2, height/2, -length/2);
         glm::vec3 v8 = glm::vec3(-width/2, height/2, length/2);
+        int texture_height = 6;
+        int texture_width = 16;
 
         // bottom face
-        room_vertices.push_back(v3);
-        room_vertices.push_back(v2);
-        room_vertices.push_back(v1);
         room_vertices.push_back(v4);
+        room_vertices.push_back(v1);
+        room_vertices.push_back(v2);
+        room_vertices.push_back(v4);
+        room_vertices.push_back(v2);
+        room_vertices.push_back(v3);
         room_normals.push_back(glm::vec3(0, 1, 0));
         room_normals.push_back(glm::vec3(0, 1, 0));
         room_normals.push_back(glm::vec3(0, 1, 0));
         room_normals.push_back(glm::vec3(0, 1, 0));
+        room_normals.push_back(glm::vec3(0, 1, 0));
+        room_normals.push_back(glm::vec3(0, 1, 0));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        
 
         // right face
         room_vertices.push_back(v5);
         room_vertices.push_back(v6);
         room_vertices.push_back(v2);
+        room_vertices.push_back(v5);
+        room_vertices.push_back(v2);
         room_vertices.push_back(v1);
         room_normals.push_back(glm::vec3(-1, 0, 0));
         room_normals.push_back(glm::vec3(-1, 0, 0));
         room_normals.push_back(glm::vec3(-1, 0, 0));
         room_normals.push_back(glm::vec3(-1, 0, 0));
+        room_normals.push_back(glm::vec3(-1, 0, 0));
+        room_normals.push_back(glm::vec3(-1, 0, 0));
+        room_textures.push_back(glm::vec2(texture_width, texture_height));
+        room_textures.push_back(glm::vec2(0, texture_height));
+        room_textures.push_back(glm::vec2(0, 0));
+        room_textures.push_back(glm::vec2(texture_width, texture_height));
+        room_textures.push_back(glm::vec2(0, 0));
+        room_textures.push_back(glm::vec2(texture_width, 0));
 
         // left face
-        room_vertices.push_back(v8);
-        room_vertices.push_back(v7);
-        room_vertices.push_back(v3);
         room_vertices.push_back(v4);
-        room_normals.push_back(glm::vec3(1, 0, 0));
-        room_normals.push_back(glm::vec3(1, 0, 0));
-        room_normals.push_back(glm::vec3(1, 0, 0));
-        room_normals.push_back(glm::vec3(1, 0, 0));
-
-        // near face
+        room_vertices.push_back(v3);
+        room_vertices.push_back(v7);
+        room_vertices.push_back(v4);
+        room_vertices.push_back(v7);
         room_vertices.push_back(v8);
-        room_vertices.push_back(v5);
+        room_normals.push_back(glm::vec3(1, 0, 0));
+        room_normals.push_back(glm::vec3(1, 0, 0));
+        room_normals.push_back(glm::vec3(1, 0, 0));
+        room_normals.push_back(glm::vec3(1, 0, 0));
+        room_normals.push_back(glm::vec3(1, 0, 0));
+        room_normals.push_back(glm::vec3(1, 0, 0));
+        room_textures.push_back(glm::vec2(0, 0));
+        room_textures.push_back(glm::vec2(texture_width, 0));
+        room_textures.push_back(glm::vec2(texture_width, texture_height));
+        room_textures.push_back(glm::vec2(0, 0));
+        room_textures.push_back(glm::vec2(texture_width, texture_height));
+        room_textures.push_back(glm::vec2(0, texture_height));
+        
+        // near face
+
         room_vertices.push_back(v1);
         room_vertices.push_back(v4);
+        room_vertices.push_back(v8);
+        room_vertices.push_back(v1);
+        room_vertices.push_back(v8);
+        room_vertices.push_back(v5);
         room_normals.push_back(glm::vec3(0, 0, -1));
         room_normals.push_back(glm::vec3(0, 0, -1));
         room_normals.push_back(glm::vec3(0, 0, -1));
         room_normals.push_back(glm::vec3(0, 0, -1));
+        room_normals.push_back(glm::vec3(0, 0, -1));
+        room_normals.push_back(glm::vec3(0, 0, -1));
+        room_textures.push_back(glm::vec2(0, 0));
+        room_textures.push_back(glm::vec2(texture_width, 0));
+        room_textures.push_back(glm::vec2(texture_width, texture_height));
+        room_textures.push_back(glm::vec2(0, 0));
+        room_textures.push_back(glm::vec2(texture_width, texture_height));
+        room_textures.push_back(glm::vec2(0, texture_height));
 
         // far face
+        room_vertices.push_back(v3);
         room_vertices.push_back(v2);
         room_vertices.push_back(v6);
-        room_vertices.push_back(v7);
         room_vertices.push_back(v3);
+        room_vertices.push_back(v6);
+        room_vertices.push_back(v7);
         room_normals.push_back(glm::vec3(0, 0, 1));
         room_normals.push_back(glm::vec3(0, 0, 1));
         room_normals.push_back(glm::vec3(0, 0, 1));
         room_normals.push_back(glm::vec3(0, 0, 1));
-
+        room_normals.push_back(glm::vec3(0, 0, 1));
+        room_normals.push_back(glm::vec3(0, 0, 1));
+        room_textures.push_back(glm::vec2(0, 0));
+        room_textures.push_back(glm::vec2(texture_width, 0));
+        room_textures.push_back(glm::vec2(texture_width, texture_height));
+        room_textures.push_back(glm::vec2(0, 0));
+        room_textures.push_back(glm::vec2(texture_width, texture_height));
+        room_textures.push_back(glm::vec2(0, texture_height));
+        
         glm::vec3 vault1 = glm::vec3(-width/4 + 1.5, height/2, length/2);
         glm::vec3 vault2 = glm::vec3(width/4 - 1.5, height/2, length/2);
         glm::vec3 vault3 = glm::vec3(-width/4 + 1.5, height/2, -length/2);
         glm::vec3 vault4 = glm::vec3(width/4 - 1.5, height/2, -length/2);
 
         // left half of top face
-        room_vertices.push_back(v8);
-        room_vertices.push_back(vault1);
-        room_vertices.push_back(vault3);
         room_vertices.push_back(v7);
+        room_vertices.push_back(vault3);
+        room_vertices.push_back(vault1);
+        room_vertices.push_back(v7);
+        room_vertices.push_back(vault1);
+        room_vertices.push_back(v8);
         room_normals.push_back(glm::vec3(0, -1, 0));
         room_normals.push_back(glm::vec3(0, -1, 0));
         room_normals.push_back(glm::vec3(0, -1, 0));
         room_normals.push_back(glm::vec3(0, -1, 0));
+        room_normals.push_back(glm::vec3(0, -1, 0));
+        room_normals.push_back(glm::vec3(0, -1, 0));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        
 
         // right half of top face
-        room_vertices.push_back(vault2);
-        room_vertices.push_back(v5);
-        room_vertices.push_back(v6);
         room_vertices.push_back(vault4);
+        room_vertices.push_back(v6);
+        room_vertices.push_back(v5);
+        room_vertices.push_back(vault4);
+        room_vertices.push_back(v5);
+        room_vertices.push_back(vault2);
         room_normals.push_back(glm::vec3(0, -1, 0));
         room_normals.push_back(glm::vec3(0, -1, 0));
         room_normals.push_back(glm::vec3(0, -1, 0));
         room_normals.push_back(glm::vec3(0, -1, 0));
+        room_normals.push_back(glm::vec3(0, -1, 0));
+        room_normals.push_back(glm::vec3(0, -1, 0));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+        room_textures.push_back(glm::vec2(-1, -1));
+
+        
+        
+        computeTangents(room_vertices, room_normals, room_textures, &room_tangents, &room_bitangents);
     }
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, &room_vertices[0]);
-    glNormalPointer(GL_FLOAT, 0, &room_normals[0]);
-    glDrawArrays(GL_QUADS, 0, room_vertices.size());
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
+    draw_obj_with_texture_and_normal(room_vertices, room_normals, room_textures, room_tangents,
+                                     room_bitangents, texture_file, normal_map);
 }
 
 vector<glm::vec3> pillar_vertices, pillar_normals;
@@ -880,7 +1032,7 @@ void draw(object * obj) {
     if (obj -> type == pillar) {
         draw_pillar();
     } else if (obj -> type == room) {
-        draw_room(obj->width, obj->length, obj->height);
+        draw_room(obj->width, obj->length, obj->height, wall_texture, wall_normal_map);
     } else if (obj -> type == barrel_vault) {
         draw_barrel_vault(obj->outer_radius, obj->inner_radius, obj->depth);
     } else if (obj -> type == sword) {

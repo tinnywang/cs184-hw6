@@ -13,9 +13,12 @@
 varying vec4 color ;
 varying vec3 mynormal ;
 varying vec4 myvertex ;
+varying mat3 mytbn;
 
 uniform sampler2D tex;
+uniform sampler2D bump;
 uniform bool istex;
+uniform bool isbump;
 uniform bool enableTextures;
 
 uniform bool isCelShaded;
@@ -94,15 +97,26 @@ void main (void)
         vec3 eyepos = vec3(0, 0, 0);
         vec3 eyedir = normalize(eyepos - mypos);
         vec3 normal = normalize(gl_NormalMatrix * mynormal);
+        if (isbump && gl_TexCoord[0].s >= 0) {
+          mypos = mytbn * mypos;
+          eyedir = normalize(mytbn * eyedir);
+          normal = normalize(vec3(texture2D(bump, gl_TexCoord[0].st).rgb * 2.0 - 1.0));
+        }
         vec3 direction, halfAngle;
 
         for (int i = 0; i < numused; i++) {
             vec4 lightcolor = lightcolor[i];
             if (lightposn[i].w == 0) {
                 direction = normalize(lightposn[i].xyz);
+                if (isbump && gl_TexCoord[0].s >= 0) {
+                  direction = normalize(mytbn * direction);
+                }
                 halfAngle = normalize(direction + eyedir);
             } else {
                 vec3 position = lightposn[i].xyz / lightposn[i].w;
+                if (isbump && gl_TexCoord[0].s >=0) {
+                  position = mytbn * position;
+                }
                 direction = normalize(position - mypos);
                 halfAngle = normalize(direction + eyedir);
             }
@@ -113,13 +127,14 @@ void main (void)
             }
         }
         finalcolor += (color * ambient) + emission;
-        if (istex && enableTextures) {
+        if (istex && enableTextures && gl_TexCoord[0].s >= 0) {
+        
           gl_FragColor = texture2D(tex, gl_TexCoord[0].st) * finalcolor;
         } else {
           gl_FragColor = finalcolor;
         }
     } else {
-        if (istex && enableTextures) {
+        if (istex && enableTextures && gl_TexCoord[0].s >= 0) {
           gl_FragColor = texture2D(tex, gl_TexCoord[0].st) * color;
         } else {
           gl_FragColor = color ;

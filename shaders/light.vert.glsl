@@ -7,9 +7,12 @@
 // out vec4 myvertex ;
 // That is certainly more modern
 
+attribute vec3 tangent;
+attribute vec3 bitangent;
 varying vec4 color ;
 varying vec3 mynormal ;
 varying vec4 myvertex ;
+varying mat3 mytbn;
 
 void main() {
     gl_TexCoord[0] = gl_MultiTexCoord0;
@@ -17,6 +20,11 @@ void main() {
     color = gl_Color ;
     mynormal = gl_Normal ;
     myvertex = gl_Vertex ;
-
+    
+    mytbn = transpose(mat3(
+        normalize((gl_NormalMatrix * normalize(tangent)).xyz),
+        normalize((gl_NormalMatrix * normalize(bitangent)).xyz),
+        normalize((gl_NormalMatrix * normalize(gl_Normal)).xyz)
+    )); 
 }
 

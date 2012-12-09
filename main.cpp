@@ -305,8 +305,13 @@ void init() {
     emissioncol = glGetUniformLocation(shaderprogram,"emission") ;
     shininesscol = glGetUniformLocation(shaderprogram,"shininess") ;
     istex = glGetUniformLocation(shaderprogram, "istex");
+    isbump = glGetUniformLocation(shaderprogram, "isbump");
     isCelShaded = glGetUniformLocation(shaderprogram, "isCelShaded");
     enableTextures = glGetUniformLocation(shaderprogram, "enableTextures");
+    texsampler = glGetUniformLocation(shaderprogram, "tex");
+    bumpsampler = glGetUniformLocation(shaderprogram, "bump");
+    tangent_loc = glGetAttribLocation(shaderprogram, "tangent");
+    bitangent_loc = glGetAttribLocation(shaderprogram, "bitangent");
     glUseProgram(shaderprogram);
     glUniform1i(enableTextures, true);
 
@@ -322,6 +327,8 @@ void init() {
     textures[7] = load_texture("textures/glass8.jpg");
     textures[8] = load_texture("textures/glass9.jpg");
     textures[9] = load_texture("textures/glass10.jpg");
+    wall_normal_map = load_texture("textures/wall/MetallicAssembly-NormalMap.png");
+    wall_texture = load_texture("textures/wall/MetallicAssembly-ColorMap.png");
 
     outline = false; // off by default
     celShade = false; // use phong by default
