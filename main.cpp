@@ -307,6 +307,7 @@ void init() {
     istex = glGetUniformLocation(shaderprogram, "istex");
     isCelShaded = glGetUniformLocation(shaderprogram, "isCelShaded");
     enableTextures = glGetUniformLocation(shaderprogram, "enableTextures");
+    glUseProgram(shaderprogram);
     glUniform1i(enableTextures, true);
 
     carpet = load_texture("textures/carpet.jpg");
