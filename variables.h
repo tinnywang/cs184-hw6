@@ -37,7 +37,7 @@ EXTERN float fovyinit ;
 #endif 
 
 EXTERN bool useGlu; // Toggle use of "official" opengl/glm transform vs user 
-EXTERN GLuint vertexshader, fragmentshader, shaderprogram ; // shaders
+EXTERN GLuint vertexshader, fragmentshader, godrayshader, shaderprogram, godrayshaderprogram; // shaders
 static enum {view, scale} transop ; // which operation to transform 
 enum shape {cube, sphere, teapot, pillar, room, cylinder, sword, arch, bench,
 	barrel_vault, window, glass, textured_cube, crystal, door} ;
@@ -50,6 +50,7 @@ EXTERN GLuint wood;
 const int numLights = 10 ; 
 EXTERN GLfloat lightposn [4*numLights] ; // Light Positions
 EXTERN GLfloat lightcolor[4*numLights] ; // Light Colors
+EXTERN GLfloat lightscreen[2*numLights] ;
 EXTERN int numused ;                     // How many lights are used 
 EXTERN int num_glass;			 // How many glass panes
 
@@ -86,8 +87,9 @@ EXTERN struct object {
 // Variables to set uniform params for lighting fragment shader 
 EXTERN GLuint lightcol ; 
 EXTERN GLuint lightpos ;
-EXTERN GLuint lightScreenCoord; 
-EXTERN GLuint numusedcol ; 
+EXTERN GLuint lightscreenLoc ; 
+EXTERN GLuint numusedcol ;
+EXTERN GLuint numusedGodray ; 
 EXTERN GLuint enablelighting ; 
 EXTERN GLuint ambientcol ; 
 EXTERN GLuint diffusecol ; 
@@ -96,6 +98,9 @@ EXTERN GLuint emissioncol ;
 EXTERN GLuint shininesscol ;
 EXTERN GLuint istex ;
 EXTERN GLuint tex;
+EXTERN int occlusionMapLoc ;
+EXTERN GLuint occlusionMap ;
+EXTERN GLuint occlusionFramebuffer ;
 
 // Variables to toggle different lighting/shading/texture/animation features
 EXTERN GLuint isCelShaded;	// phong is the default
@@ -105,7 +110,3 @@ EXTERN bool wireframe;
 EXTERN GLuint enableTextures;
 EXTERN bool textured;
 EXTERN bool animate;
-
-EXTERN GLuint occlusionMapLocation;
-EXTERN GLuint occlusionMap;
-EXTERN GLuint occlusionBuffer;

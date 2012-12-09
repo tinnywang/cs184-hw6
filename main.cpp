@@ -186,6 +186,7 @@ void mouse(int button, int state, int x, int y) {
 
 
 void keyboard(unsigned char key, int x, int y) {
+    glUseProgram(shaderprogram);
     switch(key) {
     case '+':
         amount++;
@@ -287,48 +288,16 @@ void specialKey(int key, int x, int y) {
     glutPostRedisplay();
 }
 
-void initTexturesAndBuffers() {
-    // create occlusion map texture
-    glGenTextures(1, &occlusionMap);
-    glBindTexture(GL_TEXTURE_2D, occlusionMap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w/2, h/2, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    // create occlusion map frame buffer
-    glGenFramebuffersEXT(1, &occlusionBuffer);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, occlusionBuffer);
-    /*
-    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, occlusionMap, NULL);
-
-    GLenum status;
-    status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-    cout << status << "\n";
-    if (status == GL_FRAMEBUFFER_COMPLETE) cout << "framebuffer complete";
-    if (status == GL_FRAMEBUFFER_UNDEFINED) cout << "framebuffer undefined";
-    if (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT) cout << "incomplete attachment";
-    if (status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT) cout << "framebuffer complete";
-    if (status == GL_FRAMEBUFFER_UNDEFINED) cout << "framebuffer undefined";
-    if (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT) cout << "incomplete attachment";
-    if (status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT) cout << "incomplete missing attachment";
-    if (status == GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER) cout << "incomplete draw buffer";
-    if (status == GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER) cout << "incomplete read buffer";
-    if (status == GL_FRAMEBUFFER_UNSUPPORTED) cout << "framebuffer unsupported";
-    if (status == GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE) cout << "incomplete multisample";
-    if (status == GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS) cout << "incomplete layer targets";
-    */
-}
-
 void init() {
     // Initialize shaders
     vertexshader = initshaders(GL_VERTEX_SHADER, "shaders/light.vert.glsl") ;
     fragmentshader = initshaders(GL_FRAGMENT_SHADER, "shaders/light.frag.glsl") ;
+    godrayshader = initshaders(GL_FRAGMENT_SHADER, "shaders/godray.frag.glsl");
     shaderprogram = initprogram(vertexshader, fragmentshader) ;
+    godrayshaderprogram = initprogram(vertexshader, godrayshader) ;
     enablelighting = glGetUniformLocation(shaderprogram,"enablelighting") ;
     lightpos = glGetUniformLocation(shaderprogram,"lightposn") ;
     lightcol = glGetUniformLocation(shaderprogram,"lightcolor") ;
-    lightScreenCoord = glGetUniformLocation(shaderprogram, "lightScreenCoord");
     numusedcol = glGetUniformLocation(shaderprogram,"numused") ;
     ambientcol = glGetUniformLocation(shaderprogram,"ambient") ;
     diffusecol = glGetUniformLocation(shaderprogram,"diffuse") ;
@@ -339,7 +308,6 @@ void init() {
     isCelShaded = glGetUniformLocation(shaderprogram, "isCelShaded");
     enableTextures = glGetUniformLocation(shaderprogram, "enableTextures");
     glUniform1i(enableTextures, true);
-    occlusionMapLocation = glGetUniformLocation(shaderprogram, "occlusionMap");
 
     carpet = load_texture("textures/carpet.jpg");
     wood = load_texture("textures/wood.jpg");
@@ -359,7 +327,25 @@ void init() {
     textured = true;
     animate = true;
     wireframe = false;
-    //initTexturesAndBuffers();
+
+    // variables for godrays
+    occlusionMapLoc = glGetUniformLocation(godrayshaderprogram, "occlusionMap");
+    lightscreenLoc = glGetUniformLocation(godrayshaderprogram, "lightscreen");
+    numusedGodray = glGetUniformLocation(godrayshaderprogram, "numused");
+
+    // Create a texture for the occlusion map
+    glGenTextures(1, &occlusionMap);
+    glBindTexture(GL_TEXTURE_2D, occlusionMap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w/2, h/2, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    // Create a framebuffer for the occlusion map
+    glGenFramebuffersEXT(1, &occlusionFramebuffer);
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, occlusionFramebuffer);
+    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, occlusionMap, 0);
 }
 
 int main(int argc, char* argv[]) {

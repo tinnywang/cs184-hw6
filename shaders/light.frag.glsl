@@ -126,30 +126,3 @@ void main (void)
         }
     }
 }
-
-/*
-vec4 crepuscular() {
-  vec4 final_color = vec4(0), color;
-  float illuminationDecay;
-  vec2 textCoord, deltaTextCoord;
-  for (int i=0; i < numused; i++) {
-    illuminationDecay = 1.0;
-    textCoord = gl_TexCoord[0].st;
-    deltaTextCoord = textCoord - lightScreenCoord[i];
-    deltaTexCoord *= 1.0/(float(num_samples) * density);
-    vec4 sample;
-    for (int i=0; i < num_samples; i++) {
-      textCoord -= deltaTextCoord;
-      sample = texture2D(occlusionMap, textCoord);
-      sample *= illuminationDecay * weight;
-      color += sample;
-      illuminationDecay *= decay;
-    }
-    color *= exposure;
-    final_color += color;
-  }
-  return final_color;
-}
-*/
-
-

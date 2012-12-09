@@ -22,7 +22,18 @@ using namespace std ;
 #include <vector>
 #include <map>
 
-
+// Calculate light position on screen
+void getScreenLightPos(const GLfloat light[4], int offset) {
+  double projectionMatrix[16], modelViewMatrix[16];
+  int view[4];
+  glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
+  glGetDoublev(GL_MODELVIEW_MATRIX, modelViewMatrix);
+  glGetIntegerv(GL_VIEWPORT, view);
+  GLdouble lightcoords[3];
+  gluProject((double)light[0], (double)light[1], (double)light[2], modelViewMatrix, projectionMatrix, view, &lightcoords[0], &lightcoords[1], &lightcoords[2]);
+  lightscreen[0+2*offset] = lightcoords[0]/view[2];
+  lightscreen[1+2*offset] = lightcoords[1]/view[3];
+}
 
 GLuint load_texture(const char * filename) {
     GLuint tex2d = SOIL_load_OGL_texture(
@@ -144,9 +155,11 @@ void draw_obj(vector<glm::vec3> &vertices, vector<glm::vec3> &normals) {
 
 void draw_obj_with_texture(vector<glm::vec3> &vertices,
                            vector<glm::vec3> &normals, vector<glm::vec2> &textures, GLuint texture) {
+    glUseProgram(shaderprogram);
     glUniform1i(istex, true);
 
     glTexCoordPointer(2, GL_FLOAT, 0, &textures[0]);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -899,125 +912,81 @@ void draw(object * obj) {
 }
 
 void drawOcclusionMap() {
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, occlusionBuffer);
-    glUseProgram(0); // don't use any shaders
-    glViewport(0, 0, w/2, h/2);
-    glClear(GL_COLOR_BUFFER_BIT);
+  glClearColor(.2, .2, .2, 1);
+  glGenerateMipmapEXT(GL_TEXTURE_2D);
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, occlusionFramebuffer);
+  glUseProgram(0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glViewport(0, 0, w/2, h/2);
 
-    mat4 mv, pm, mvp;
-    float aspect = w / (float) h, zNear = 0.1, zFar = 1000.0 ;
-    if (useGlu) {
-        pm = glm::perspective(fovy,aspect,zNear,zFar);
-        mv = glm::lookAt(eye, center, up);
-    } else {
-        pm = Transform::perspective(fovy,aspect,zNear,zFar) ;
-        pm = glm::transpose(mv) ; // accounting for row major
-        mv = Transform::lookAt(eye,center,up) ;
-        mv = glm::transpose(mv) ; // accounting for row major
-    }
-    mvp = pm * mv;
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(&pm[0][0]);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(&mv[0][0]);
-    int viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    float x, y, z, w;
-    glm::vec4 pos;
-    glm::vec2 screen_pos;
+  glMatrixMode(GL_PROJECTION);
+  float aspect = w / (float) h, zNear = 0.1, zFar = 99.0 ;
+  mat4 mv = Transform::perspective(fovy,aspect,zNear,zFar) ;
+  mv = glm::transpose(mv); // accounting for row major 
+  glLoadMatrixf(&mv[0][0]);
+
+  glMatrixMode(GL_MODELVIEW) ;
+  mv = Transform::lookAt(eye,center,up) ;
+  mv = glm::transpose(mv); // accounting for row major
+  glLoadMatrixf(&mv[0][0]);
+
+  if (numused) {
     for (int i = 0; i < numused; i++) {
-        // calculate screen coordinates of light
-        pos = glm::vec4(lightposn[4*i], lightposn[4*i+1], lightposn[4*i+2], lightposn[4*i+3]) * mvp;
-        if (pos.w != 0) {
-            pos.x /= pos.w;
-            pos.y /= pos.w;
-            pos.z /= pos.w;
-            pos.w = 1;
-        }
-        GLfloat screenCoord[] = {viewport[0] + viewport[2] * (pos.x+1)/2,
-                                 viewport[1] + viewport[3] * (pos.y+1)/2
-                                };
-        glUniform2fv(lightScreenCoord+i, 1, screenCoord);
-
-        // draw light as a point
-        GLfloat color[] = {lightcolor[4*i],
-                           lightcolor[4*i+1],
-                           lightcolor[4*i+2],
-                           lightcolor[4*i+3]
-                          };
-        GLfloat posn[] = {pos.x, pos.y, pos.z};
-        glColor4fv(&color[0]);
-        glBegin(GL_POINTS);
-        glVertex3fv(&posn[0]);
-        glEnd();
+      const GLfloat _light[] = {lightposn[4*i], lightposn[4*i+1], lightposn[4*i+2], lightposn[4*i+3]};
+      GLfloat light[4];
+      transformvec(_light, light);
+      getScreenLightPos(light, i);
     }
+  }
 
-    // draw occluding objects
-    mat4 sc(1.0) , tr(1.0), transf(1.0) ;
-    sc = Transform::scale(sx,sy,1.0) ;
-    glLoadMatrixf(&transf[0][0]) ;
-    transf = glm::transpose(mv) * transf;
-    transf = sc * transf;
-    for (int i = 0 ; i < numobjects ; i++) {
-        object * obj = &(objects[i]) ;
-        {
-            mat4 transform = obj -> transform;
-            if (obj -> type == sword) {
-                mat4 transf_new = Transform::translate(0, sword_move,0) * transf;
-                glLoadMatrixf(&glm::transpose(transform * transf_new)[0][0]);
-            } else {
-                glLoadMatrixf(&glm::transpose(transform * transf)[0][0]);
-            }
-        }
-        glColor3f(0, 0, 0);
-        draw(obj);
-    }
-    glGenerateMipmap(GL_TEXTURE_2D);
+  // Transformations for objects, involving translation and scaling
+  mat4 sc(1.0) , tr(1.0), transf(1.0) ;
+  sc = Transform::scale(sx,sy,1.0) ;
+  glLoadMatrixf(&transf[0][0]) ;
+
+  transf = glm::transpose(mv) * transf;
+  transf = sc * transf;
+
+  glColor3d(0, 0, 0);
+  for (int i = 0 ; i < numobjects ; i++) {
+    object * obj = &(objects[i]) ;
+    mat4 transform = obj -> transform;
+    if (obj -> type == sword) {
+      mat4 transf_new = Transform::translate(0, sword_move,0) * transf;
+      glLoadMatrixf(&glm::transpose(transform * transf_new)[0][0]);
+    } else if (obj ->type == crystal) {
+      mat3 rotation = Transform::rotate(crystal_deg, up);
+      mat4 crys_rotate(rotation[0][0],rotation[0][1],rotation[0][2],0,
+                       rotation[1][0],rotation[1][1],rotation[1][2],0,
+                       rotation[2][0],rotation[2][1],rotation[2][2],0,
+                       0,0,0,1);
+      mat4 transf_new =  sc * transform * Transform::translate(0, 0, 45) * crys_rotate * Transform::translate(0, 0, -85) * glm::transpose(mv);
+      glLoadMatrixf(&glm::transpose(transf_new)[0][0]);
+    } else {
+      glLoadMatrixf(&glm::transpose(transform * transf)[0][0]);
+    }     
+    draw(obj);
+  }
 }
 
-void display() {
-    /*
-    drawOcclusionMap();
 
+void drawSceneRender() {
     glGenerateMipmapEXT(GL_TEXTURE_2D);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
     glUseProgram(shaderprogram);
-    glClearColor(0, 0, 1, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    send occlusion map
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, occlusionMap);
-    glUniform1i(occlusionMapLocation, 0);
-    */
-
-    glUseProgram(shaderprogram);
-    glClearColor(0, 0, 1, 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // I'm including the basic matrix setup for model view to
-    // give some sense of how this works.
 
     glMatrixMode(GL_MODELVIEW);
     mat4 mv ;
-
     if (useGlu) mv = glm::lookAt(eye,center,up) ;
     else {
         mv = Transform::lookAt(eye,center,up) ;
         mv = glm::transpose(mv) ; // accounting for row major
     }
     glLoadMatrixf(&mv[0][0]) ;
-
-    // Set Light and Material properties for the teapot
-    // Lights are transformed by current modelview matrix.
-    // The shader can't do this globally.
-    // So we need to do so manually.
     if (numused) {
         glUniform1i(enablelighting,true) ;
 
-        // YOUR CODE FOR HW 2 HERE.
-        // You need to pass the lights to the shader.
-        // Remember that lights are transformed by modelview first.
         for (int i = 0; i < numused; i++) {
             const GLfloat _light[] = {lightposn[4*i], lightposn[4*i+1], lightposn[4*i+2], lightposn[4*i+3]};
             GLfloat light[4];
@@ -1033,22 +1002,14 @@ void display() {
     // Transformations for objects, involving translation and scaling
     mat4 sc(1.0) , tr(1.0), transf(1.0) ;
     sc = Transform::scale(sx,sy,1.0) ;
-
-    // YOUR CODE FOR HW 2 HERE.
-    // You need to use scale, translate and modelview to
-    // set up the net transformation matrix for the objects.
-    // Account for GLM issues etc.
     glLoadMatrixf(&transf[0][0]) ;
 
     transf = glm::transpose(mv) * transf;
     transf = sc * transf;
+
     for (int i = 0 ; i < numobjects ; i++) {
         object * obj = &(objects[i]) ;
-
         {
-            // YOUR CODE FOR HW 2 HERE.
-            // Set up the object transformations
-            // And pass in the appropriate material properties
             mat4 transform = obj -> transform;
             if (obj -> type == sword) {
                 mat4 transf_new = Transform::translate(0, sword_move,0) * transf;
@@ -1091,7 +1052,7 @@ void display() {
             glUniform1i(enablelighting, false);
 
             draw(obj);
-            // Undo wireframe rendering.
+            // Undo wireframe rendering
             glDisable(GL_CULL_FACE);
             glDisable(GL_LINE_SMOOTH);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1099,5 +1060,51 @@ void display() {
         }
         draw(obj);
     }
-    glutSwapBuffers();
+}
+
+void drawToScreen() {
+  glGenerateMipmapEXT(GL_TEXTURE_2D);
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+  glUseProgram(godrayshaderprogram);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(0, 1, 0, 1, -1, 1);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glClear(GL_DEPTH_BUFFER_BIT);
+
+  // Send occlusion map
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, occlusionMap);
+  glUniform1i(occlusionMapLoc, 1);
+  glUniform1i(numusedGodray, numused);
+  glUniform2fv(lightscreenLoc, numused, &lightscreen[0]);
+  
+  glEnable(GL_TEXTURE_2D);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+  glBegin(GL_QUADS);
+    glTexCoord2f(0, 0);
+    glVertex2f(0, 0);
+    glTexCoord2f(1, 0);
+    glVertex2f(1, 0);
+    glTexCoord2f(1, 1);
+    glVertex2f(1, 1);
+    glTexCoord2f(0, 1);
+    glVertex2f(0, 1);
+  glEnd();
+
+  glDisable(GL_BLEND);
+  glDisable(GL_TEXTURE_2D);
+}
+
+void display() {
+  glClearColor(1, 1, 1, 1);
+  drawOcclusionMap();
+  glViewport(0, 0, w, h);
+  drawSceneRender();
+  drawToScreen();
+  glutSwapBuffers();
 }
