@@ -108,6 +108,7 @@ EXTERN int occlusionMapLoc ;
 EXTERN GLuint occlusionMap ;
 EXTERN GLuint occlusionFramebuffer ;
 EXTERN GLuint isbump;
+EXTERN bool godray;
 
 // Variables to toggle different lighting/shading/texture/animation features
 EXTERN GLuint isCelShaded;	// phong is the default

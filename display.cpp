@@ -1068,7 +1068,7 @@ void drawOcclusionMap() {
   glGenerateMipmapEXT(GL_TEXTURE_2D);
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, occlusionFramebuffer);
   glUseProgram(0);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT);
   glViewport(0, 0, w/2, h/2);
 
   glMatrixMode(GL_PROJECTION);
@@ -1121,9 +1121,7 @@ void drawOcclusionMap() {
   }
 }
 
-
 void drawSceneRender() {
-    glGenerateMipmapEXT(GL_TEXTURE_2D);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
     glUseProgram(shaderprogram);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1235,7 +1233,11 @@ void drawToScreen() {
   
   glEnable(GL_TEXTURE_2D);
   glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  if (godray) {
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+  } else {
+    glBlendFunc(GL_ZERO, GL_ONE);
+  }
 
   glBegin(GL_QUADS);
     glTexCoord2f(0, 0);

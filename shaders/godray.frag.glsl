@@ -9,7 +9,7 @@ uniform sampler2D sceneRender;
 const float exposure = 0.0035;
 const float decay = 1;
 const float density = 0.84;
-uniform float weight = 5.65;
+uniform float weight = 5.25;
 const int NUM_SAMPLES = 100;
 
 void main() {
