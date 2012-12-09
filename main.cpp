@@ -75,9 +75,10 @@ void printHelp() {
               << "press 'z' to zoom in, 'x' to zoom out.\n"
               << "press 'o' to toggle outlines.\n"
               << "press 'w' to toggle wireframes.\n"
-              << "press 'l' to toggle fragment shader.\n"
+              << "press 'f' to toggle fragment shader.\n"
               << "press 't' to toggle textures.\n"
               << "press 'a' to toggle animation.\n"
+	      << "press 'l' to toggle volumetric lighting.\n"
               << "press ESC to quit.\n" ;
 }
 
@@ -241,7 +242,7 @@ void keyboard(unsigned char key, int x, int y) {
         outline = !outline;
         glutPostRedisplay();
         break;
-    case 'l':
+    case 'f':
         celShade = !celShade;
         glUniform1i(isCelShaded, celShade);
         glutPostRedisplay();
@@ -257,6 +258,10 @@ void keyboard(unsigned char key, int x, int y) {
         break;
     case 'w':
         wireframe = !wireframe;
+        glutPostRedisplay();
+        break;
+    case 'l':
+        godray = !godray;
         glutPostRedisplay();
         break;
     }
@@ -335,6 +340,7 @@ void init() {
     textured = true;
     animate = true;
     wireframe = false;
+    godray = true;
 
     // variables for godrays
     occlusionMapLoc = glGetUniformLocation(godrayshaderprogram, "occlusionMap");
