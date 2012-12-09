@@ -12,6 +12,7 @@
 #include <sstream>
 #include <deque>
 #include <stack>
+#include <utility>
 #include <GL/glut.h>
 #include "Transform.h"
 #include "Simple OpenGL Image Library/src/SOIL.h"
@@ -191,58 +192,55 @@ void draw_obj_with_texture(vector<glm::vec3> &vertices,
 
 void draw_obj_with_texture_and_normal(vector<glm::vec3> &vertices, vector<glm::vec3> &normals, vector<glm::vec2> &textures,
                                       vector<glm::vec3> tangents, vector<glm::vec3> bitangents, GLuint texture, GLuint normal_map) {
-    glUniform1i(istex, true);
-    glUniform1i(isbump, true);
+    if (bumpmap) {
+      glUniform1i(istex, true);
+      glUniform1i(isbump, true);
     
-    glActiveTexture(GL_TEXTURE0);    
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glEnable(GL_TEXTURE_2D);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, 0, &textures[0]);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glUniform1i(texsampler, 0);
+      glActiveTexture(GL_TEXTURE0);    
+      glBindTexture(GL_TEXTURE_2D, texture);
+      glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+      glTexCoordPointer(2, GL_FLOAT, 0, &textures[0]);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      glUniform1i(texsampler, 0);
     
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, normal_map);
-    glEnable(GL_TEXTURE_2D);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glUniform1i(bumpsampler, 1);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, normal_map);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      glUniform1i(bumpsampler, 1);
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);
 
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glNormalPointer(GL_FLOAT, 0, &normals[0]);
+      glEnableClientState(GL_NORMAL_ARRAY);
+      glNormalPointer(GL_FLOAT, 0, &normals[0]);
     
-    glEnableVertexAttribArray(tangent_loc);
-    glVertexAttribPointer(tangent_loc, 3, GL_FLOAT, GL_FALSE, 0, &tangents[0]);
+      glEnableVertexAttribArray(tangent_loc);
+      glVertexAttribPointer(tangent_loc, 3, GL_FLOAT, GL_FALSE, 0, &tangents[0]);
 
-    glEnableVertexAttribArray(bitangent_loc);
-    glVertexAttribPointer(bitangent_loc, 3, GL_FLOAT, GL_FALSE, 0, &bitangents[0]);
+      glEnableVertexAttribArray(bitangent_loc);
+      glVertexAttribPointer(bitangent_loc, 3, GL_FLOAT, GL_FALSE, 0, &bitangents[0]);
 
-    glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+      glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
-    glDisableVertexAttribArray(tangent_loc);
-    glDisableVertexAttribArray(bitangent_loc);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+      glDisableVertexAttribArray(tangent_loc);
+      glDisableVertexAttribArray(bitangent_loc);
+      glDisableClientState(GL_VERTEX_ARRAY);
+      glDisableClientState(GL_NORMAL_ARRAY);
+      glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-    glActiveTexture(GL_TEXTURE1);    
-    glDisable(GL_TEXTURE_2D);
-    glActiveTexture(GL_TEXTURE0);
-    glDisable(GL_TEXTURE_2D);
     
 
-    glUniform1i(istex, false);
-    glUniform1i(isbump, false);
-    
+      glUniform1i(istex, false);
+      glUniform1i(isbump, false);
+    } else {
+      draw_obj_with_texture(vertices, normals, textures, texture);
+    }
 }
 
 void computeTangents(const vector<glm::vec3> & vertices, const vector<glm::vec3> & normals,
@@ -1253,7 +1251,53 @@ void drawToScreen() {
   glDisable(GL_BLEND);
   glDisable(GL_TEXTURE_2D);
 }
+/*				
+std::pair<GLuint, GLuint> generateShadowFrame()
+{
+  
+  GLuint depthTextureId;
+  
+  int shadowMapWidth = RENDER_WIDTH * SHADOW_MAP_RATIO;
+  int shadowMapHeight = RENDER_HEIGHT * SHADOW_MAP_RATIO;
 
+  GLenum FBOstatus;
+
+  // Try to use a texture depth component
+  glGenTextures(1, &depthTextureId);
+  glBindTexture(GL_TEXTURE_2D, depthTextureId);
+
+  // GL_LINEAR does not make sense for depth texture. However, next tutorial shows usage of GL_LINEAR and PCF
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  // Remove artifact on the edges of the shadowmap
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+
+  // No need to force GL_DEPTH_COMPONENT24, drivers usually give you the max precision if available
+  glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  // create a framebuffer object
+  glGenFramebuffersEXT(1, &fboId);
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
+
+  // Instruct openGL that we won't bind a color texture with the currently bound FBO
+  glDrawBuffer(GL_NONE);
+  glReadBuffer(GL_NONE);
+
+  // attach the texture to FBO depth attachment point
+  glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,GL_TEXTURE_2D, depthTextureId, 0);
+
+  // check FBO status
+  FBOstatus = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+  if(FBOstatus != GL_FRAMEBUFFER_COMPLETE_EXT)
+	  printf("GL_FRAMEBUFFER_COMPLETE_EXT failed, CANNOT use FBO\n");
+
+  // switch back to window-system-provided framebuffer
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+}
+*/
 void display() {
   glClearColor(1, 1, 1, 1);
   drawOcclusionMap();
@@ -1262,3 +1306,5 @@ void display() {
   drawToScreen();
   glutSwapBuffers();
 }
+
+

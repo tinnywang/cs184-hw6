@@ -29,15 +29,6 @@ translate 0 0 -0.2
         teapot 0.15
   popTransform
 
-# Floor (white but now with shading)
-# Materials first.  We don't change specular and shininess
-  ambient 0 0 0 1
-  diffuse 1 1 1 1
-  pushTransform
-        scale 1.0 1.0 0.025 
-        cube 1.0 
-  popTransform
-
 # Undo global transform
 popTransform
 

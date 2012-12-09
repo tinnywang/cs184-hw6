@@ -264,6 +264,10 @@ void keyboard(unsigned char key, int x, int y) {
         godray = !godray;
         glutPostRedisplay();
         break;
+    case 'b':
+        bumpmap = !bumpmap;
+        glutPostRedisplay();
+        break;
     }
     glutPostRedisplay();
 }
@@ -341,6 +345,7 @@ void init() {
     animate = true;
     wireframe = false;
     godray = true;
+    bumpmap = true;
 
     // variables for godrays
     occlusionMapLoc = glGetUniformLocation(godrayshaderprogram, "occlusionMap");
