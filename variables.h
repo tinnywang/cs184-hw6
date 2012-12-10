@@ -49,6 +49,7 @@ EXTERN GLuint wall_normal_map;
 EXTERN GLuint wall_texture;
 EXTERN GLuint texsampler;
 EXTERN GLuint bumpsampler;
+EXTERN GLuint shadowmapsampler;
 EXTERN GLuint tangent_loc;
 EXTERN GLuint bitangent_loc;
 
@@ -119,3 +120,14 @@ EXTERN bool wireframe;
 EXTERN GLuint enableTextures;
 EXTERN bool textured;
 EXTERN bool animate;
+
+// Needed for shadowmap
+EXTERN GLuint shadowvertexshader, shadowfragshader, shadowprogram;
+EXTERN GLuint f_id;
+EXTERN GLuint dt_id;
+EXTERN GLuint depthmatrix;
+EXTERN GLuint depthmatrix2;
+EXTERN GLuint shadowmap;
+EXTERN vec3 lightInvDir;
+
+

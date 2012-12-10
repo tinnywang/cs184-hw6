@@ -234,8 +234,6 @@ void draw_obj_with_texture_and_normal(vector<glm::vec3> &vertices, vector<glm::v
       glDisableClientState(GL_NORMAL_ARRAY);
       glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-    
-
       glUniform1i(istex, false);
       glUniform1i(isbump, false);
     } else {
@@ -1066,7 +1064,7 @@ void drawOcclusionMap() {
   glGenerateMipmapEXT(GL_TEXTURE_2D);
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, occlusionFramebuffer);
   glUseProgram(0);
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, w/2, h/2);
 
   glMatrixMode(GL_PROJECTION);
@@ -1125,6 +1123,10 @@ void drawSceneRender() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, dt_id);
+    glUniform1i(shadowmap, 2);
+    
     mat4 mv ;
     if (useGlu) mv = glm::lookAt(eye,center,up) ;
     else {
@@ -1154,13 +1156,27 @@ void drawSceneRender() {
 
     transf = glm::transpose(mv) * transf;
     transf = sc * transf;
-
+    
+    mat4 shadow_transf = sc;
+    glm::mat4 biasMatrix(
+    0.5, 0.0, 0.0, 0.0,
+    0.0, 0.5, 0.0, 0.0,
+    0.0, 0.0, 0.5, 0.0,
+    0.5, 0.5, 0.5, 1.0
+    );
+    
     for (int i = 0 ; i < numobjects ; i++) {
         object * obj = &(objects[i]) ;
         {
             mat4 transform = obj -> transform;
             if (obj -> type == sword) {
                 mat4 transf_new = Transform::translate(0, sword_move,0) * transf;
+                glm::mat4 depthProjectionMatrix = glm::ortho<float>(-10,10,-10,10,-10,20);
+                glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::vec3(0,1,0));
+                glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * Transform::translate(0, sword_move,0) * shadow_transf;
+
+                glm::mat4 depthBiasMVP = biasMatrix*depthMVP;
+                glUniformMatrix4fv(depthmatrix2, 1, GL_FALSE, &depthBiasMVP[0][0]);
                 glLoadMatrixf(&glm::transpose(transform * transf_new)[0][0]);
             } else if (obj ->type == crystal) {
                 mat3 rotation = Transform::rotate(crystal_deg, up);
@@ -1169,8 +1185,21 @@ void drawSceneRender() {
                                  rotation[2][0],rotation[2][1],rotation[2][2],0,
                                  0,0,0,1);
                 mat4 transf_new =  sc * transform * Transform::translate(0, 0, 45) * crys_rotate * Transform::translate(0, 0, -85) * glm::transpose(mv);
+                glm::mat4 depthProjectionMatrix = glm::ortho<float>(-10,10,-10,10,-10,20);
+                glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::vec3(0,1,0));
+                glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * sc * transform * Transform::translate(0, 0, 45) * crys_rotate * Transform::translate(0, 0, -85);
+  
+                glm::mat4 depthBiasMVP = biasMatrix*depthMVP;
+                glUniformMatrix4fv(depthmatrix2, 1, GL_FALSE, &depthBiasMVP[0][0]);
                 glLoadMatrixf(&glm::transpose(transf_new)[0][0]);
             } else {
+                glm::mat4 depthProjectionMatrix = glm::ortho<float>(-10,10,-10,10,-10,20);
+                glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::vec3(0,1,0));
+                glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * shadow_transf;
+
+                glm::mat4 depthBiasMVP = biasMatrix*depthMVP;
+                
+                glUniformMatrix4fv(depthmatrix2, 1, GL_FALSE, &depthBiasMVP[0][0]);
                 glLoadMatrixf(&glm::transpose(transform * transf)[0][0]);
             }
             glUniform4fv(ambientcol, 1, obj -> ambient);
@@ -1207,7 +1236,7 @@ void drawSceneRender() {
             glUniform1i(enablelighting, true);
         }
         draw(obj);
-    }
+    }        
 }
 
 void drawToScreen() {
@@ -1251,60 +1280,77 @@ void drawToScreen() {
   glDisable(GL_BLEND);
   glDisable(GL_TEXTURE_2D);
 }
-/*				
-std::pair<GLuint, GLuint> generateShadowFrame()
-{
-  
-  GLuint depthTextureId;
-  
-  int shadowMapWidth = RENDER_WIDTH * SHADOW_MAP_RATIO;
-  int shadowMapHeight = RENDER_HEIGHT * SHADOW_MAP_RATIO;
 
-  GLenum FBOstatus;
+void drawShadowMap() {
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, f_id);
+  glUseProgram(shadowprogram);
+  glClear(GL_DEPTH_BUFFER_BIT);
 
-  // Try to use a texture depth component
-  glGenTextures(1, &depthTextureId);
-  glBindTexture(GL_TEXTURE_2D, depthTextureId);
+  glMatrixMode(GL_MODELVIEW);
+  mat4 mv ;
+  if (useGlu) mv = glm::lookAt(eye,center,up) ;
+  else {
+      mv = Transform::lookAt(eye,center,up) ;
+      mv = glm::transpose(mv) ; // accounting for row major
+  }
+  glLoadMatrixf(&mv[0][0]) ;
+  for (int i = 0; i < numused; i++) {
+      const GLfloat _light[] = {lightposn[4*i], lightposn[4*i+1], lightposn[4*i+2], lightposn[4*i+3]};
+      if (_light[3] == 0) {
+        lightInvDir = glm::vec3(_light[0],_light[1],_light[2]);
+        break;
+      }
+  }
 
-  // GL_LINEAR does not make sense for depth texture. However, next tutorial shows usage of GL_LINEAR and PCF
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  // Transformations for objects, involving translation and scaling
+  mat4 sc(1.0) , tr(1.0), transf(1.0) ;
+  sc = Transform::scale(sx,sy,1.0) ;
+  glLoadMatrixf(&transf[0][0]) ;
 
-  // Remove artifact on the edges of the shadowmap
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+  transf = glm::transpose(mv) * transf;
+  transf = sc * transf;
 
-  // No need to force GL_DEPTH_COMPONENT24, drivers usually give you the max precision if available
-  glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-  glBindTexture(GL_TEXTURE_2D, 0);
-
-  // create a framebuffer object
-  glGenFramebuffersEXT(1, &fboId);
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
-
-  // Instruct openGL that we won't bind a color texture with the currently bound FBO
-  glDrawBuffer(GL_NONE);
-  glReadBuffer(GL_NONE);
-
-  // attach the texture to FBO depth attachment point
-  glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,GL_TEXTURE_2D, depthTextureId, 0);
-
-  // check FBO status
-  FBOstatus = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-  if(FBOstatus != GL_FRAMEBUFFER_COMPLETE_EXT)
-	  printf("GL_FRAMEBUFFER_COMPLETE_EXT failed, CANNOT use FBO\n");
-
-  // switch back to window-system-provided framebuffer
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+  mat4 shadow_transf = sc;
+  for (int i = 0 ; i < numobjects ; i++) {
+      object * obj = &(objects[i]) ;
+      {
+          mat4 transform = obj -> transform;
+          if (obj -> type == sword) {
+              mat4 transf_new = Transform::translate(0, sword_move,0) * transf;
+              glm::mat4 depthProjectionMatrix = glm::ortho<float>(-10,10,-10,10,-10,20);
+              glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::vec3(0,1,0));
+              glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * Transform::translate(0, sword_move,0) * shadow_transf;
+              glUniformMatrix4fv(depthmatrix, 1, GL_FALSE, &depthMVP[0][0]);
+          } else if (obj ->type == crystal) {
+              mat3 rotation = Transform::rotate(crystal_deg, up);
+              mat4 crys_rotate(rotation[0][0],rotation[0][1],rotation[0][2],0,
+                               rotation[1][0],rotation[1][1],rotation[1][2],0,
+                               rotation[2][0],rotation[2][1],rotation[2][2],0,
+                               0,0,0,1);
+              mat4 transf_new =  sc * transform * Transform::translate(0, 0, 45) * crys_rotate * Transform::translate(0, 0, -85) * glm::transpose(mv);
+              glm::mat4 depthProjectionMatrix = glm::ortho<float>(-10,10,-10,10,-10,20);
+              glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::vec3(0,1,0));
+              glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * sc * transform * Transform::translate(0, 0, 45) * crys_rotate * Transform::translate(0, 0, -85);
+              glUniformMatrix4fv(depthmatrix, 1, GL_FALSE, &depthMVP[0][0]);  
+          } else {
+              glm::mat4 depthProjectionMatrix = glm::ortho<float>(-10,10,-10,10,-10,20);
+              glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::vec3(0,1,0));
+              glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * shadow_transf;
+              glUniformMatrix4fv(depthmatrix, 1, GL_FALSE, &depthMVP[0][0]);
+          }
+      }
+      draw(obj);
+  }
 }
-*/
+
 void display() {
+  //drawShadowMap();
   glClearColor(1, 1, 1, 1);
   drawOcclusionMap();
   glViewport(0, 0, w, h);
   drawSceneRender();
   drawToScreen();
-  glutSwapBuffers();
+  glutSwapBuffers();	
 }
 
 

@@ -6,13 +6,14 @@
 // out vec4 mynormal ;
 // out vec4 myvertex ;
 // That is certainly more modern
-
+uniform mat4 depthmatrix;
 attribute vec3 tangent;
 attribute vec3 bitangent;
 varying vec4 color ;
 varying vec3 mynormal ;
 varying vec4 myvertex ;
 varying mat3 mytbn;
+varying vec4 shadowcoord;
 
 void main() {
     gl_TexCoord[0] = gl_MultiTexCoord0;
@@ -21,6 +22,7 @@ void main() {
     mynormal = gl_Normal ;
     myvertex = gl_Vertex ;
     
+    shadowcoord = depthmatrix * gl_Vertex;
     mytbn = transpose(mat3(
         normalize((gl_NormalMatrix * normalize(tangent)).xyz),
         normalize((gl_NormalMatrix * normalize(bitangent)).xyz),

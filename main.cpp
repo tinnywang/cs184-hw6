@@ -63,6 +63,32 @@ void saveScreenshot(string fname) {
     FreeImage_Save(FIF_PNG, img, fname.c_str(), 0);
 }
 
+void generateShadowFrame(int frame_width, int frame_height)
+{
+  // framebuffer
+  glGenFramebuffersEXT(1, &f_id);
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, f_id);
+  
+  // depth texture
+  glGenTextures(1, &dt_id);
+  glBindTexture(GL_TEXTURE_2D, dt_id);  // the current texture that we will be working with (we can change it and later bind that change to a sampler)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+  glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, frame_width, frame_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+
+  glDrawBuffer(GL_NONE);
+  glReadBuffer(GL_NONE);
+  glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,GL_TEXTURE_2D, dt_id, 0);
+
+  GLenum FBOstatus = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+  if(FBOstatus != GL_FRAMEBUFFER_COMPLETE_EXT)
+	  printf("GL_FRAMEBUFFER_COMPLETE_EXT failed, CANNOT use FBO\n");
+  
+  // switch back to window-system-provided framebuffer
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+}
 
 void printHelp() {
     std::cout << "\npress 'h' to print this message again.\n"
@@ -302,8 +328,14 @@ void init() {
     vertexshader = initshaders(GL_VERTEX_SHADER, "shaders/light.vert.glsl") ;
     fragmentshader = initshaders(GL_FRAGMENT_SHADER, "shaders/light.frag.glsl") ;
     godrayshader = initshaders(GL_FRAGMENT_SHADER, "shaders/godray.frag.glsl");
+    shadowvertexshader = initshaders(GL_VERTEX_SHADER, "shaders/shadow.vert.glsl") ;
+    shadowfragshader = initshaders(GL_FRAGMENT_SHADER, "shaders/shadow.frag.glsl") ;
+    
     shaderprogram = initprogram(vertexshader, fragmentshader) ;
     godrayshaderprogram = initprogram(vertexshader, godrayshader) ;
+    shadowprogram = initprogram(shadowvertexshader, shadowfragshader) ;
+    
+    // variables for normal shaders
     enablelighting = glGetUniformLocation(shaderprogram,"enablelighting") ;
     lightpos = glGetUniformLocation(shaderprogram,"lightposn") ;
     lightcol = glGetUniformLocation(shaderprogram,"lightcolor") ;
@@ -321,6 +353,8 @@ void init() {
     bumpsampler = glGetUniformLocation(shaderprogram, "bump");
     tangent_loc = glGetAttribLocation(shaderprogram, "tangent");
     bitangent_loc = glGetAttribLocation(shaderprogram, "bitangent");
+    shadowmapsampler = glGetAttribLocation(shaderprogram, "shadow");
+
     glUseProgram(shaderprogram);
     glUniform1i(enableTextures, true);
 
@@ -365,6 +399,14 @@ void init() {
     glGenFramebuffersEXT(1, &occlusionFramebuffer);
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, occlusionFramebuffer);
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, occlusionMap, 0);
+    
+    // variables for shadowmap
+    depthmatrix = glGetUniformLocation(shadowprogram, "depthmatrix");
+    depthmatrix2 = glGetUniformLocation(shaderprogram, "depthmatrix");
+    shadowmap = glGetUniformLocation(shaderprogram, "shadowmap");
+    
+    // Create a framebuffer for the shadow map and create texture for shadow map
+    generateShadowFrame(w, h);
 }
 
 int main(int argc, char* argv[]) {
@@ -388,7 +430,7 @@ int main(int argc, char* argv[]) {
     glutReshapeWindow(w, h);
     glutMotionFunc(drag);
     glutIdleFunc(animation);
-
+    
     if (argc > 2) {
         allowGrader = true;
         stringstream tcid;

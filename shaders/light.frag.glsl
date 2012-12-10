@@ -14,9 +14,10 @@ varying vec4 color ;
 varying vec3 mynormal ;
 varying vec4 myvertex ;
 varying mat3 mytbn;
-
+varying vec4 shadowcoord;
 uniform sampler2D tex;
 uniform sampler2D bump;
+uniform sampler2D shadowmap;
 uniform bool istex;
 uniform bool isbump;
 uniform bool enableTextures;
@@ -88,9 +89,12 @@ void main (void)
     if (enablelighting) {
 
         vec4 finalcolor = vec4(0, 0, 0, 0);
-
-        // YOUR CODE FOR HW 2 HERE
-        // A key part is implementation of the fragment shader
+        
+        float shadow = 1.0;
+        if ( texture2D( shadowmap, shadowcoord.xy ).z  <  shadowcoord.z){
+          shadow = 0.5;
+        }
+        
         vec4 _mypos = gl_ModelViewMatrix * myvertex;
         vec3 mypos = _mypos.xyz / _mypos.w;
         // not sure about this
@@ -129,9 +133,9 @@ void main (void)
         finalcolor += (color * ambient) + emission;
         if (istex && enableTextures && gl_TexCoord[0].s >= 0) {
         
-          gl_FragColor = texture2D(tex, gl_TexCoord[0].st) * finalcolor;
+          gl_FragColor = shadow * texture2D(tex, gl_TexCoord[0].st) * finalcolor;
         } else {
-          gl_FragColor = finalcolor;
+          gl_FragColor = shadow * finalcolor;
         }
     } else {
         if (istex && enableTextures && gl_TexCoord[0].s >= 0) {
