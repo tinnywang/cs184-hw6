@@ -9,7 +9,7 @@ camera 0 -2 2 0 0 0 0 1 1 30.0
 
 # lights.  A single point and directional light
 # Note that your program must support up to 10 lights
-light 0.6 0 0.1 0 1 0.5 0 1  
+light 0 -2 2 0 1 0.5 0 1  
 
 # I do a global transform to move this down a little 
 # A good use of matrix stacks and hierarchy 
@@ -26,7 +26,17 @@ translate 0 0 -0.2
   pushTransform
         translate 0 0 0.1 
         rotate 1 0 0 90 
-        teapot 0.15
+        scale .15 .15 .15
+        teapot 1
+  popTransform
+
+# Floor (white but now with shading)
+# Materials first.  We don't change specular and shininess
+  ambient 0 0 0 1
+  diffuse 1 1 1 1
+  pushTransform
+        scale 1.0 1.0 0.025 
+        cube 1.0 
   popTransform
 
 # Undo global transform

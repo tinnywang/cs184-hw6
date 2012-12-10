@@ -23,6 +23,14 @@ using namespace std ;
 #include <vector>
 #include <map>
 
+void printMatrix(mat4 matrix) {
+  matrix = glm::transpose(matrix);
+  std::cout <<"\n"<< matrix[0][0] << " " << matrix[0][1] << " " << matrix[0][2] << " " << matrix[0][3] <<"\n"
+            << matrix[1][0] << " " << matrix[1][1] << " " << matrix[1][2] << " " << matrix[1][3] << "\n"
+            << matrix[2][0] << " " << matrix[2][1] << " " << matrix[2][2] << " " << matrix[2][3] << "\n"
+          << matrix[3][0] << " " << matrix[3][1] << " " << matrix[3][2] << " " << matrix[3][3] << "\n" <<"\n";
+
+}
 // Calculate light position on screen
 void getScreenLightPos(const GLfloat light[4], int offset) {
   double projectionMatrix[16], modelViewMatrix[16];
@@ -156,7 +164,11 @@ void draw_obj(vector<glm::vec3> &vertices, vector<glm::vec3> &normals) {
 
 void draw_obj_with_texture(vector<glm::vec3> &vertices,
                            vector<glm::vec3> &normals, vector<glm::vec2> &textures, GLuint texture) {
-    glUseProgram(shaderprogram);
+    if (usingShadow) {
+      glUseProgram(shadowprogram);
+    } else {
+      glUseProgram(shaderprogram);
+    }
     glUniform1i(istex, true);
 
     glTexCoordPointer(2, GL_FLOAT, 0, &textures[0]);
@@ -236,6 +248,69 @@ void draw_obj_with_texture_and_normal(vector<glm::vec3> &vertices, vector<glm::v
 
       glUniform1i(istex, false);
       glUniform1i(isbump, false);
+    } else {
+      draw_obj_with_texture(vertices, normals, textures, texture);
+    }
+}
+
+void draw_obj_with_texture_and_normal_and_height(vector<glm::vec3> &vertices, vector<glm::vec3> &normals, vector<glm::vec2> &textures,
+                                                 vector<glm::vec3> tangents, vector<glm::vec3> bitangents, GLuint texture, GLuint normal_map, GLuint height_map) {
+    if (displacementmap) {
+      glUniform1i(istex, true);
+      glUniform1i(isbump, true);
+      glUniform1i(isdisplace, true);
+    
+      glActiveTexture(GL_TEXTURE0);    
+      glBindTexture(GL_TEXTURE_2D, texture);
+      glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+      glTexCoordPointer(2, GL_FLOAT, 0, &textures[0]);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      glUniform1i(texsampler, 0);
+    
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, normal_map);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      glUniform1i(bumpsampler, 1);
+      
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, height_map);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      glUniform1i(heightsampler, 2);
+      
+
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);
+
+      glEnableClientState(GL_NORMAL_ARRAY);
+      glNormalPointer(GL_FLOAT, 0, &normals[0]);
+    
+      glEnableVertexAttribArray(tangent_loc);
+      glVertexAttribPointer(tangent_loc, 3, GL_FLOAT, GL_FALSE, 0, &tangents[0]);
+
+      glEnableVertexAttribArray(bitangent_loc);
+      glVertexAttribPointer(bitangent_loc, 3, GL_FLOAT, GL_FALSE, 0, &bitangents[0]);
+
+      glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+
+      glDisableVertexAttribArray(tangent_loc);
+      glDisableVertexAttribArray(bitangent_loc);
+      glDisableClientState(GL_VERTEX_ARRAY);
+      glDisableClientState(GL_NORMAL_ARRAY);
+      glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+      glUniform1i(istex, false);
+      glUniform1i(isbump, false);
+      glUniform1i(isdisplace, false);
+      
     } else {
       draw_obj_with_texture(vertices, normals, textures, texture);
     }
@@ -816,6 +891,51 @@ void draw_cylinder(double top_radius, double bottom_radius, double height, doubl
     draw_obj(vertices, normals);
 }
 
+vector <glm::vec3> bottom_vertices, bottom_normals, bottom_tangents, bottom_bitangents;
+vector <glm::vec2> bottom_textures;
+void draw_bottom(double width, double length, double height, GLuint texture_file, GLuint normal_map, GLuint height_map) {
+  if (bottom_vertices.size() == 0) {
+    float divide = 200.0;
+    float increment_height = 8.0/divide;
+    float increment_width = 8.0/divide;
+    int t_x = 0;
+    int t_y = 0;
+    for (float x = -width/2; x < width/2; x+=width/divide) {
+      t_y = 0;
+      for (float y = length/2; y > -length/2; y-=length/divide) {
+        glm::vec3 v1 = glm::vec3(x+width/divide, -height/2, y);
+        glm::vec3 v2 = glm::vec3(x+width/divide, -height/2, y-length/divide);
+        glm::vec3 v3 = glm::vec3(x, -height/2, y-length/divide);
+        glm::vec3 v4 = glm::vec3(x, -height/2, y);
+        // bottom face
+        bottom_vertices.push_back(v4);
+        bottom_vertices.push_back(v1);
+        bottom_vertices.push_back(v2);
+        bottom_vertices.push_back(v4);
+        bottom_vertices.push_back(v2);
+        bottom_vertices.push_back(v3);
+        bottom_normals.push_back(glm::vec3(0, 1, 0));
+        bottom_normals.push_back(glm::vec3(0, 1, 0));
+        bottom_normals.push_back(glm::vec3(0, 1, 0));
+        bottom_normals.push_back(glm::vec3(0, 1, 0));
+        bottom_normals.push_back(glm::vec3(0, 1, 0));
+        bottom_normals.push_back(glm::vec3(0, 1, 0));
+        bottom_textures.push_back(glm::vec2(increment_width * t_x, increment_height * t_y));
+        bottom_textures.push_back(glm::vec2(increment_width *(t_x+1), increment_height * t_y));
+        bottom_textures.push_back(glm::vec2(increment_width *(t_x+1), increment_height * (t_y + 1)));
+        bottom_textures.push_back(glm::vec2(increment_width * t_x, increment_height * t_y));
+        bottom_textures.push_back(glm::vec2(increment_width *(t_x+1), increment_height * (t_y + 1)));
+        bottom_textures.push_back(glm::vec2(increment_width * t_x, increment_height * (t_y + 1)));
+        t_y++;
+      }      
+      t_x++;
+    }
+      computeTangents(bottom_vertices, bottom_normals, bottom_textures, &bottom_tangents, &bottom_bitangents);
+  }
+  draw_obj_with_texture_and_normal_and_height(bottom_vertices, bottom_normals, bottom_textures, bottom_tangents,
+                                              bottom_bitangents, texture_file, normal_map, height_map);
+}
+
 vector <glm::vec3> room_vertices, room_normals, room_tangents, room_bitangents;
 vector <glm::vec2> room_textures;
 void draw_room(double width, double length, double height, GLuint texture_file, GLuint normal_map) {
@@ -830,26 +950,6 @@ void draw_room(double width, double length, double height, GLuint texture_file, 
         glm::vec3 v8 = glm::vec3(-width/2, height/2, length/2);
         int texture_height = 6;
         int texture_width = 16;
-
-        // bottom face
-        room_vertices.push_back(v4);
-        room_vertices.push_back(v1);
-        room_vertices.push_back(v2);
-        room_vertices.push_back(v4);
-        room_vertices.push_back(v2);
-        room_vertices.push_back(v3);
-        room_normals.push_back(glm::vec3(0, 1, 0));
-        room_normals.push_back(glm::vec3(0, 1, 0));
-        room_normals.push_back(glm::vec3(0, 1, 0));
-        room_normals.push_back(glm::vec3(0, 1, 0));
-        room_normals.push_back(glm::vec3(0, 1, 0));
-        room_normals.push_back(glm::vec3(0, 1, 0));
-        room_textures.push_back(glm::vec2(-1, -1));
-        room_textures.push_back(glm::vec2(-1, -1));
-        room_textures.push_back(glm::vec2(-1, -1));
-        room_textures.push_back(glm::vec2(-1, -1));
-        room_textures.push_back(glm::vec2(-1, -1));
-        room_textures.push_back(glm::vec2(-1, -1));
         
 
         // right face
@@ -1029,6 +1129,7 @@ void draw(object * obj) {
         draw_pillar();
     } else if (obj -> type == room) {
         draw_room(obj->width, obj->length, obj->height, wall_texture, wall_normal_map);
+        draw_bottom(obj->width, obj->length, obj->height, floor_texture, floor_normal_map, floor_height_map);
     } else if (obj -> type == barrel_vault) {
         draw_barrel_vault(obj->outer_radius, obj->inner_radius, obj->depth);
     } else if (obj -> type == sword) {
@@ -1123,9 +1224,9 @@ void drawSceneRender() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, dt_id);
-    glUniform1i(shadowmap, 2);
+    //glActiveTexture(GL_TEXTURE2);
+    //glBindTexture(GL_TEXTURE_2D, dt_id);
+    //glUniform1i(shadowmap, 2);
     
     mat4 mv ;
     if (useGlu) mv = glm::lookAt(eye,center,up) ;
@@ -1193,10 +1294,10 @@ void drawSceneRender() {
                 glUniformMatrix4fv(depthmatrix2, 1, GL_FALSE, &depthBiasMVP[0][0]);
                 glLoadMatrixf(&glm::transpose(transf_new)[0][0]);
             } else {
-                glm::mat4 depthProjectionMatrix = glm::ortho<float>(-10,10,-10,10,-10,20);
-                glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::vec3(0,1,0));
-                glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * shadow_transf;
-
+                    glm::mat4 depthProjectionMatrix = glm::ortho<float>(-2,2,-2,2,-2,4);
+                    glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::vec3(0,1,0));
+                    //printMatrix(shadow_transf);
+                    glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * shadow_transf * transform;
                 glm::mat4 depthBiasMVP = biasMatrix*depthMVP;
                 
                 glUniformMatrix4fv(depthmatrix2, 1, GL_FALSE, &depthBiasMVP[0][0]);
@@ -1282,9 +1383,10 @@ void drawToScreen() {
 }
 
 void drawShadowMap() {
+  usingShadow = true;
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, f_id);
   glUseProgram(shadowprogram);
-  glClear(GL_DEPTH_BUFFER_BIT);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
   glMatrixMode(GL_MODELVIEW);
   mat4 mv ;
@@ -1311,6 +1413,7 @@ void drawShadowMap() {
   transf = sc * transf;
 
   mat4 shadow_transf = sc;
+
   for (int i = 0 ; i < numobjects ; i++) {
       object * obj = &(objects[i]) ;
       {
@@ -1333,19 +1436,22 @@ void drawShadowMap() {
               glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * sc * transform * Transform::translate(0, 0, 45) * crys_rotate * Transform::translate(0, 0, -85);
               glUniformMatrix4fv(depthmatrix, 1, GL_FALSE, &depthMVP[0][0]);  
           } else {
-              glm::mat4 depthProjectionMatrix = glm::ortho<float>(-10,10,-10,10,-10,20);
+              glm::mat4 depthProjectionMatrix = glm::ortho<float>(-2,2,-2,2,-2,4);
               glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::vec3(0,1,0));
-              glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * shadow_transf;
+              printMatrix(shadow_transf);
+              glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * shadow_transf * transform;
               glUniformMatrix4fv(depthmatrix, 1, GL_FALSE, &depthMVP[0][0]);
           }
       }
       draw(obj);
   }
+  usingShadow = false;
 }
 
 void display() {
-  //drawShadowMap();
   glClearColor(1, 1, 1, 1);
+  
+  //drawShadowMap();
   drawOcclusionMap();
   glViewport(0, 0, w, h);
   drawSceneRender();

@@ -89,11 +89,11 @@ void main (void)
     if (enablelighting) {
 
         vec4 finalcolor = vec4(0, 0, 0, 0);
-        
+        //vec3 normshadowcoord =shadowcoord.xyz/shadowcoord.w;
         float shadow = 1.0;
-        if ( texture2D( shadowmap, shadowcoord.xy ).z  <  shadowcoord.z){
-          shadow = 0.5;
-        }
+        //if ( texture2D( shadowmap, normshadowcoord.xy ).z  <  normshadowcoord.z){
+        //  shadow = 0.5;
+        //}
         
         vec4 _mypos = gl_ModelViewMatrix * myvertex;
         vec3 mypos = _mypos.xyz / _mypos.w;

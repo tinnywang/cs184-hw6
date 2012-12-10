@@ -129,5 +129,13 @@ EXTERN GLuint depthmatrix;
 EXTERN GLuint depthmatrix2;
 EXTERN GLuint shadowmap;
 EXTERN vec3 lightInvDir;
+EXTERN bool usingShadow;
 
+// Needed for displacement
+EXTERN GLuint heightsampler;
+EXTERN GLuint floor_texture;
+EXTERN GLuint floor_normal_map;
+EXTERN GLuint floor_height_map;
+EXTERN bool displacementmap;
+EXTERN GLuint isdisplace;
 

@@ -48,6 +48,13 @@ void reshape(int width, int height) {
     glLoadMatrixf(&mv[0][0]) ;
 
     glViewport(0, 0, w, h);
+    
+    glBindTexture(GL_TEXTURE_2D, occlusionMap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w/2, h/2, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 }
 
 void saveScreenshot(string fname) {
@@ -294,6 +301,11 @@ void keyboard(unsigned char key, int x, int y) {
         bumpmap = !bumpmap;
         glutPostRedisplay();
         break;
+    case 'd':
+      displacementmap = !displacementmap;
+      glutPostRedisplay();
+      break;
+    
     }
     glutPostRedisplay();
 }
@@ -380,7 +392,8 @@ void init() {
     wireframe = false;
     godray = true;
     bumpmap = true;
-
+    displacementmap = true;
+    
     // variables for godrays
     occlusionMapLoc = glGetUniformLocation(godrayshaderprogram, "occlusionMap");
     lightscreenLoc = glGetUniformLocation(godrayshaderprogram, "lightscreen");
@@ -404,9 +417,15 @@ void init() {
     depthmatrix = glGetUniformLocation(shadowprogram, "depthmatrix");
     depthmatrix2 = glGetUniformLocation(shaderprogram, "depthmatrix");
     shadowmap = glGetUniformLocation(shaderprogram, "shadowmap");
-    
+  
+    // variables for displacementmap
+    heightsampler = glGetUniformLocation(shaderprogram, "displace");
+    floor_texture = load_texture("textures/floor/floor.jpg");
+    floor_normal_map = load_texture("textures/floor/floor_normal.jpg");
+    floor_height_map = load_texture("textures/floor/floor_height.jpg");
+    isdisplace = glGetUniformLocation(shaderprogram, "isdisplace");
     // Create a framebuffer for the shadow map and create texture for shadow map
-    generateShadowFrame(w, h);
+    //generateShadowFrame(w, h);
 }
 
 int main(int argc, char* argv[]) {
