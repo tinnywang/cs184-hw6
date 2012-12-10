@@ -166,7 +166,7 @@ void readfile(const char * filename) {
                 else if (cmd == "sphere" || cmd == "cube" || cmd == "teapot" || cmd == "pillar"
                          || cmd == "room" || cmd == "cylinder" || cmd == "sword" || cmd == "arch"
                          || cmd == "bench" || cmd == "barrel_vault" || cmd == "window" || cmd == "glass"
-                         || cmd == "textured_cube" || cmd == "crystal" || cmd == "door") {
+                         || cmd == "textured_cube" || cmd == "crystal" || cmd == "door" || cmd == "triforce") {
                     if (numobjects == maxobjects) // No more objects
                         cerr << "Reached Maximum Number of Objects " << numobjects << " Will ignore further objects\n" ;
                     else {
@@ -220,6 +220,8 @@ void readfile(const char * filename) {
                             else if (cmd == "textured_cube") {
                                 obj -> type = textured_cube;
                                 obj -> texture = carpet;
+                            } else if (cmd == "triforce") {
+                              obj->type = triforce;
                             }
                         }
                         ++numobjects ;

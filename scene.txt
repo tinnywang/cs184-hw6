@@ -341,7 +341,7 @@ door 12 27
 popTransform
 
 #aisle
-specular 1 1 1 1
+specular 0 0 0 1
 shininess 40
 pushTransform
 diffuse 1 0 0 1
@@ -349,6 +349,13 @@ translate 0 -18 0
 scale 10 1 100
 textured_cube 1
 diffuse .48 .5 .56 1
+popTransform
+
+#triforce
+pushTransform
+translate 0 -17.5 -27.3
+scale 4 7 4
+triforce 1
 popTransform
 
 #sword

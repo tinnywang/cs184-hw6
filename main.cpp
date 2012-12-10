@@ -126,6 +126,8 @@ void printHelp() {
               << "press 't' to toggle textures.\n"
               << "press 'a' to toggle animation.\n"
 	      << "press 'l' to toggle volumetric lighting.\n"
+	      << "press 'b' to toggle bump mapping.\n"
+        << "press 'd' to toggle displacement mapping.\n"
               << "press ESC to quit.\n" ;
 }
 
@@ -440,6 +442,12 @@ void init() {
     isdisplace = glGetUniformLocation(shaderprogram, "isdisplace");
     // Create a framebuffer for the shadow map and create texture for shadow map
     //generateShadowFrame(w, h);
+    
+    // animated texture
+    triforce1 = load_texture("textures/triforce_top.png");
+    triforce2 = load_texture("textures/triforce_left.png");
+    triforce3 = load_texture("textures/triforce_right.png");
+    
 }
 
 int main(int argc, char* argv[]) {

@@ -40,7 +40,7 @@ EXTERN bool useGlu; // Toggle use of "official" opengl/glm transform vs user
 EXTERN GLuint vertexshader, fragmentshader, godrayshader, shaderprogram, godrayshaderprogram; // shaders
 static enum {view, scale} transop ; // which operation to transform 
 enum shape {cube, sphere, teapot, pillar, room, cylinder, sword, arch, bench,
-	barrel_vault, window, glass, textured_cube, crystal, door} ;
+	barrel_vault, window, glass, textured_cube, crystal, door, triforce} ;
 EXTERN float sx, sy ; // the scale in x and y
 EXTERN GLuint textures[10];
 EXTERN GLuint carpet;
@@ -138,4 +138,9 @@ EXTERN GLuint floor_normal_map;
 EXTERN GLuint floor_height_map;
 EXTERN bool displacementmap;
 EXTERN GLuint isdisplace;
+
+// animated texture
+EXTERN GLuint triforce1;
+EXTERN GLuint triforce2;
+EXTERN GLuint triforce3;
 

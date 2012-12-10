@@ -732,6 +732,65 @@ void draw_cube(double width, double length, double height, double y_start, bool 
     }
 }
 
+void draw_triforce(double width, double length, double height, double y_start, bool inverse_norm, GLuint texture_file) {
+    vector<glm::vec3> vertices, normals;
+    vector<glm::vec2> textures;
+    init_cube(width, length, height, y_start, inverse_norm, vertices, normals);
+    if (texture_file != -1) {
+        //left
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+
+        //right
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+
+        //top
+        textures.push_back(glm::vec2(0, 0));
+        textures.push_back(glm::vec2(1, 1));
+        textures.push_back(glm::vec2(0, 1));
+        textures.push_back(glm::vec2(1, 1));
+        textures.push_back(glm::vec2(0, 0));
+        textures.push_back(glm::vec2(1, 0));
+        //bottom
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+
+        //near
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+
+        //far
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+        textures.push_back(glm::vec2(-1, -1));
+
+
+        draw_obj_with_texture(vertices, normals, textures, texture_file);
+    } else {
+      draw_obj(vertices, normals);
+    }
+}
+
 vector<glm::vec3> barrel_vertices, barrel_normals;
 void draw_barrel_vault(double outer_radius, double inner_radius, double depth) {
     if (barrel_vertices.size() == 0) {
@@ -1124,6 +1183,8 @@ void transformvec (const GLfloat input[4], GLfloat output[4]) {
     }
 }
 
+GLuint current_texture;
+int ticks = 20;
 void draw(object * obj) {
     if (obj -> type == pillar) {
         draw_pillar();
@@ -1157,6 +1218,20 @@ void draw(object * obj) {
         glutSolidSphere(obj->size, tessel, tessel) ;
     } else if (obj -> type == teapot) {
         glutSolidTeapot(obj->size) ;
+    } else if (obj -> type == triforce) {
+      if (ticks == 20) {
+        ticks = 0;
+        if (current_texture == triforce1) {
+          current_texture = triforce2;
+        } else if (current_texture == triforce2) {
+          current_texture = triforce3;
+        } else {
+          current_texture = triforce1;
+        }
+      } else {
+        ticks += 1;
+      }
+      draw_triforce(1,1,1,0,false, current_texture);
     }
 }
 
@@ -1452,6 +1527,7 @@ void display() {
   glClearColor(1, 1, 1, 1);
   
   //drawShadowMap();
+  
   drawOcclusionMap();
   glViewport(0, 0, w, h);
   drawSceneRender();
