@@ -1239,12 +1239,13 @@ void drawOcclusionMap() {
   glClearColor(.2, .2, .2, 1);
   glGenerateMipmapEXT(GL_TEXTURE_2D);
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, occlusionFramebuffer);
+  //glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
   glUseProgram(0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, w/2, h/2);
 
   glMatrixMode(GL_PROJECTION);
-  float aspect = w / (float) h, zNear = 0.1, zFar = 99.0 ;
+  float aspect = w / (float) h, zNear = 0.1, zFar = 1000.0 ;
   mat4 mv = Transform::perspective(fovy,aspect,zNear,zFar) ;
   mv = glm::transpose(mv); // accounting for row major 
   glLoadMatrixf(&mv[0][0]);
@@ -1426,11 +1427,10 @@ void drawToScreen() {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glClear(GL_DEPTH_BUFFER_BIT);
-
   // Send occlusion map
-  glActiveTexture(GL_TEXTURE1);
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, occlusionMap);
-  glUniform1i(occlusionMapLoc, 1);
+  glUniform1i(occlusionMapLoc, 0);
   glUniform1i(numusedGodray, numused);
   glUniform2fv(lightscreenLoc, numused, &lightscreen[0]);
   
@@ -1524,10 +1524,8 @@ void drawShadowMap() {
 }
 
 void display() {
-  glClearColor(1, 1, 1, 1);
-  
+  glClearColor(0, 0, 0, 1);
   //drawShadowMap();
-  
   drawOcclusionMap();
   glViewport(0, 0, w, h);
   drawSceneRender();
