@@ -291,7 +291,7 @@ void keyboard(unsigned char key, int x, int y) {
         outline = !outline;
         glutPostRedisplay();
         break;
-    case 'c':
+    case 'f':
         celShade = !celShade;
         glUniform1i(isCelShaded, celShade);
         glutPostRedisplay();
